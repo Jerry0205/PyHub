@@ -4,14 +4,19 @@ import subprocess
 import os
 import json
 import sys
-import importlib
 
 # Konfigurationskonstanten
 CONFIG_FILE = "config.json"  # Datei für gespeicherte Einstellungen
 HIGHLIGHT_COLOR = (0, 122, 255, 128)  # Farbe für Hervorhebungen
+MENU_OPTIONS = [
+    "2048",
+    "Snake",
+    "Pong",
+    "4 Gewinnt",
+    "Slots",
+    "Beenden",
+]  # Letzte Option beendet das Programm
 SETTINGS_OPTIONS = ["Dark Mode", "Back"]  # Einstellungsoptionen
-GAMES_FOLDER = "C:/Users/Jerry0205/Documents/VSCode/PyHub/games"  # Ordner, in dem sich die Spiele befinden
-GAME_CONFIG_FILE = "C:/Users/Jerry0205/Documents/VSCode/PyHub/game_config.json" # Datei für Spielnamen-Konfiguration
 
 
 class GameLauncher:
@@ -32,36 +37,10 @@ class GameLauncher:
             "settings_hover": False  # Über Settings-Button schweben (Maus)
         }
 
-        self.game_name_mapping = self.load_game_name_mapping()
-        self.game_names = self.load_game_names()  # Lädt die Spielnamen
         self.init_pygame()    # Pygame initialisieren
         self.load_settings()  # Einstellungen laden
         self.update_fonts()   # Schriftarten erstellen
         self.load_assets()    # Assets (z. B. Logo) laden
-
-    def load_game_name_mapping(self):
-        # Lädt die Spielnamen-Zuordnung aus der Konfigurationsdatei
-        try:
-            with open(GAME_CONFIG_FILE, "r") as f:
-                return json.load(f)
-        except FileNotFoundError:
-            print(f"{GAME_CONFIG_FILE} nicht gefunden. Verwende Dateinamen.")
-            return {}
-
-    def load_game_names(self):
-        # Lädt die Namen der Spiele aus dem 'games'-Ordner
-        game_names = []
-        try:
-            for filename in os.listdir(GAMES_FOLDER):
-                if filename.endswith(".py"):
-                    game_name = filename[:-3]
-                    # Anzeigenamen aus der Konfiguration holen, falls vorhanden
-                    display_name = self.game_name_mapping.get(game_name, game_name)
-                    game_names.append(display_name)
-        except FileNotFoundError:
-            print(f"Error: Folder '{GAMES_FOLDER}' not found!")
-            return []
-        return game_names
 
     def init_pygame(self):
         # Initialisiert Pygame und den Bildschirm
@@ -104,7 +83,7 @@ class GameLauncher:
             # Lade beide Logos
             dark_logo_path = os.path.join(base_path, "assetes", "Logo.png")
             white_logo_path = os.path.join(base_path, "assetes", "Whitelogo.png")
-
+            
             self.dark_logo = pygame.image.load(dark_logo_path).convert_alpha()
             self.white_logo = pygame.image.load(white_logo_path).convert_alpha()
             print("Logos erfolgreich geladen")
@@ -140,12 +119,11 @@ class GameLauncher:
         # Überschrift: Logo einfügen (falls vorhanden)
         # Wähle das Logo basierend auf dem Dark Mode-Status
         current_logo = self.dark_logo if self.screen_config["settings"]["dark_mode"] else self.white_logo
-
+        
         if current_logo is not None:
             # Skalieren des Logos relativ zur Fenstergröße - HIER WURDE DIE GRÖSSE ANGEPASST
-            logo_width = self.screen_config["width"] // 4  # Größer (war vorher // 4)
-            logo_height = self.screen_config["height"] // 2.5
-              # Größer (war vorher // 8)
+            logo_width = self.screen_config["width"] // 3  # Größer (war vorher // 4)
+            logo_height = self.screen_config["height"] // 2.5  # Größer (war vorher // 8)
             logo_scaled = pygame.transform.scale(
                 current_logo, (logo_width, logo_height)
             )
@@ -181,9 +159,9 @@ class GameLauncher:
 
         # Menüoptionen zeichnen
         option_rects = []
-        for i, game_name in enumerate(self.game_names):  # Nutze die geladenen Spielnamen
+        for i, option in enumerate(MENU_OPTIONS):
             font = self.screen_config["fonts"]["option"]
-            option_surf = font.render(game_name, True, text_color)
+            option_surf = font.render(option, True, text_color)
             option_rect = option_surf.get_rect(
                 center=(
                     self.screen_config["width"] // 2,
@@ -195,21 +173,6 @@ class GameLauncher:
                 self.draw_highlight(option_rect)
             screen.blit(option_surf, option_rect)
             option_rects.append(option_rect)
-
-        # "Beenden"-Option hinzufügen
-        quit_font = self.screen_config["fonts"]["option"]
-        quit_surf = quit_font.render("Beenden", True, text_color)
-        quit_rect = quit_surf.get_rect(
-            center=(
-                self.screen_config["width"] // 2,
-                self.screen_config["height"] // 4 +
-                len(self.game_names) * (self.screen_config["height"] // 12) # Positioniere "Beenden" unter den Spielen
-            )
-        )
-        if len(self.game_names) == self.state["mouse_hover"]:
-            self.draw_highlight(quit_rect)
-        screen.blit(quit_surf, quit_rect)
-        option_rects.append(quit_rect) # Füge "Beenden" zu den klickbaren Bereichen hinzu
 
         pygame.display.flip()
         return option_rects, button_rect
@@ -277,7 +240,7 @@ class GameLauncher:
                 self.screen_config["current_view"] = "settings"
             elif self.state["mouse_hover"] >= 0:
                 # Bei Klick auf "Beenden" (letzte Option) wird das Programm beendet
-                if self.state["mouse_hover"] == len(self.game_names):  # Vergleiche mit der Anzahl der Spiele
+                if self.state["mouse_hover"] == len(MENU_OPTIONS) - 1:
                     pygame.quit()
                     sys.exit()
                 else:
@@ -308,17 +271,16 @@ class GameLauncher:
 
     def launch_game(self, index):
         # Startet das ausgewählte Spiel
-        if 0 <= index < len(self.game_names):
-            game_name = self.game_names[index]
-            # Finde den Dateinamen anhand des Anzeigenamens
-            for filename, display_name in self.game_name_mapping.items():
-              if display_name == game_name:
-                game_filename = filename
-                break
-            else:
-              game_filename = game_name # Fallback: Anzeigename == Dateiname
+        games = [
+            "zweitausendachtundvierzig.py",
+            "snake.py",
+            "pong.py",
+            "viergewint.py",
+            "SLOTS.py"
+        ]
 
-            game_path = os.path.join(os.path.dirname(__file__), GAMES_FOLDER, f"{game_filename}.py") # Pfad zum Spiel im 'games'-Ordner
+        if 0 <= index < len(games):
+            game_path = os.path.join(os.path.dirname(__file__), games[index])
             if os.path.exists(game_path):
                 subprocess.run([sys.executable, game_path])
                 return True

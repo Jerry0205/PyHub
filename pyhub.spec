@@ -6,19 +6,18 @@ a = Analysis(
     ['pyhub.py'],
     pathex=[],
     binaries=[],
-   datas=[
-    ('assetes/*.png', 'assetes'),
-    # Entferne oder kommentiere die config.json-Zeile aus
-    # ('config.json', '.'),
-    ('main_menu.py', '.'),
-    ('pong.py', '.'),
-    ('snake.py', '.'),
-    ('viergewint.py', '.'),
-    ('SLOTS.py', '.'),
-    ('zweitausendachtundvierzig.py', '.'),
-    ('resource_path.py', '.')
-],
-
+    datas=[
+        ('assetes/*.png', 'assetes'),
+        ('assetes/*.ico', 'assetes'),
+        ('config.json', '.'),
+        ('main_menu.py', '.'),
+        ('pong.py', '.'),
+        ('snake.py', '.'),
+        ('viergewint.py', '.'),
+        ('SLOTS.py', '.'),
+        ('zweitausendachtundvierzig.py', '.'),
+        ('resource_path.py', '.')
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -31,7 +30,7 @@ a = Analysis(
 )
 
 pyz = PYZ(
-    a.pure, 
+    a.pure,
     a.zipped_data,
     cipher=block_cipher
 )
@@ -56,5 +55,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='assetes/Logo.ico'  # Geändert zu .ico
+    icon='assetes/Logo.ico'  # Falls du ein Icon hast
 )

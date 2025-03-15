@@ -54,30 +54,18 @@ class GameLauncher:
         )
         pygame.display.set_caption("PYHUB")
 
-def load_settings(self):
-    # Lädt Einstellungen aus JSON-Datei
-    try:
-        if os.path.exists(CONFIG_FILE):
+    def load_settings(self):
+        # Lädt Einstellungen aus JSON-Datei
+        try:
             with open(CONFIG_FILE, "r") as file:
                 self.screen_config["settings"] = json.load(file)
-        else:
-            # Standardeinstellungen verwenden und Datei erstellen
-            self.screen_config["settings"] = {"dark_mode": False}
-            self.save_settings()
-    except Exception as e:
-        print(f"Fehler beim Laden der Einstellungen: {e}")
-        # Standardeinstellungen verwenden
-        self.screen_config["settings"] = {"dark_mode": False}
-        self.save_settings()
+        except FileNotFoundError:
+            self.save_settings()  # Erstellt Datei, falls nicht vorhanden
 
-def save_settings(self):
-    # Speichert Einstellungen in JSON-Datei
-    try:
+    def save_settings(self):
+        # Speichert Einstellungen in JSON-Datei
         with open(CONFIG_FILE, "w") as file:
             json.dump(self.screen_config["settings"], file)
-    except Exception as e:
-        print(f"Fehler beim Speichern der Einstellungen: {e}")
-
 
     def update_fonts(self):
         # Aktualisiert Schriftarten bei Größenänderung
@@ -91,11 +79,10 @@ def save_settings(self):
     def load_assets(self):
         # Lädt Assets, z. B. die Logos aus dem Ordner "assetes"
         try:
-            from resource_path import resource_path
-            
-            # Lade beide Logos mit der resource_path Funktion
-            dark_logo_path = resource_path(os.path.join("assetes", "Logo.png"))
-            white_logo_path = resource_path(os.path.join("assetes", "Whitelogo.png"))   
+            base_path = os.path.dirname(os.path.abspath(__file__))
+            # Lade beide Logos
+            dark_logo_path = os.path.join(base_path, "assetes", "Logo.png")
+            white_logo_path = os.path.join(base_path, "assetes", "Whitelogo.png")
             
             self.dark_logo = pygame.image.load(dark_logo_path).convert_alpha()
             self.white_logo = pygame.image.load(white_logo_path).convert_alpha()
@@ -137,7 +124,7 @@ def save_settings(self):
             # Skalieren des Logos relativ zur Fenstergröße - HIER WURDE DIE GRÖSSE ANGEPASST
             logo_width = self.screen_config["width"] // 4  # Größer (war vorher // 4)
             logo_height = self.screen_config["height"] // 2.5
-          # Größer (war vorher // 8)
+              # Größer (war vorher // 8)
             logo_scaled = pygame.transform.scale(
                 current_logo, (logo_width, logo_height)
             )
@@ -283,54 +270,26 @@ def save_settings(self):
             elif self.state["mouse_hover"] == 1:
                 self.screen_config["current_view"] = "main_menu"
 
-def launch_game(self, index):
-    # Startet das ausgewählte Spiel
-    games = [
-        "zweitausendachtundvierzig.py",
-        "snake.py",
-        "pong.py",
-        "viergewint.py",
-        "SLOTS.py"
-    ]
+    def launch_game(self, index):
+        # Startet das ausgewählte Spiel
+        games = [
+            "zweitausendachtundvierzig.py",
+            "snake.py",
+            "pong.py",
+            "viergewint.py",
+            "SLOTS.py"
+        ]
 
-    if 0 <= index < len(games):
-        try:
-            from resource_path import resource_path
-            game_path = resource_path(games[index])
-            
-            # Wenn wir in einer PyInstaller-EXE sind, müssen wir anders starten
-            if hasattr(sys, '_MEIPASS'):
-                # In einer EXE: Importiere und führe das Modul direkt aus
-                game_name = os.path.splitext(games[index])[0]
-                try:
-                    # Dynamischer Import des Spielmoduls
-                    game_module = __import__(game_name)
-                    # Wenn das Modul eine main-Funktion hat, rufe sie auf
-                    if hasattr(game_module, 'main'):
-                        game_module.main()
-                    # Sonst, wenn es eine Hauptspiel-Funktion hat
-                    elif hasattr(game_module, 'hauptspiel') and game_name == "zweitausendachtundvierzig":
-                        game_module.hauptspiel(pygame.display.set_mode((self.screen_config["width"], self.screen_config["height"])))
-                    # Für andere Spiele, die keinen expliziten Einstiegspunkt haben
-                    else:
-                        # Führe das Modul direkt aus (es sollte einen __main__ Block haben)
-                        exec(open(game_path).read())
-                except Exception as e:
-                    print(f"Fehler beim Starten des Spiels: {e}")
-            else:
-                # Normale Python-Umgebung: Starte als Unterprozess
+        if 0 <= index < len(games):
+            game_path = os.path.join(os.path.dirname(__file__), games[index])
+            if os.path.exists(game_path):
                 subprocess.run([sys.executable, game_path])
-            
-            return True
-        except Exception as e:
-            print(f"Fehler beim Starten des Spiels: {e}")
-            return False
+                return True
 
-    print(f"Error: Game '{index}' not found!")
-    return False
+        print(f"Error: Game '{index}' not found!")
+        return False
 
-
-def run(self):
+    def run(self):
         # Hauptschleife des Programms
         while True:
             if self.screen_config["current_view"] == "main_menu":

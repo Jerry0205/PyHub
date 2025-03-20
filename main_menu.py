@@ -6,7 +6,6 @@ import json
 import sys
 
 # Konfigurationskonstanten
-CONFIG_FILE = "config.json"  # Datei für gespeicherte Einstellungen
 HIGHLIGHT_COLOR = (0, 122, 255, 128)  # Farbe für Hervorhebungen
 MENU_OPTIONS = [
     "2048",
@@ -14,6 +13,7 @@ MENU_OPTIONS = [
     "Pong",
     "4 Gewinnt",
     "Slots",
+    "Tetris",
     "Beenden",
 ]  # Letzte Option beendet das Programm
 SETTINGS_OPTIONS = ["Dark Mode", "Back"]  # Einstellungsoptionen
@@ -36,6 +36,9 @@ class GameLauncher:
             "mouse_hover": -1,      # Überfahrener Menüpunkt (Maus)
             "settings_hover": False  # Über Settings-Button schweben (Maus)
         }
+        
+        # Pfad zur config.json im selben Verzeichnis wie das Skript
+        self.config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 
         self.init_pygame()    # Pygame initialisieren
         self.load_settings()  # Einstellungen laden
@@ -57,14 +60,15 @@ class GameLauncher:
     def load_settings(self):
         # Lädt Einstellungen aus JSON-Datei
         try:
-            with open(CONFIG_FILE, "r") as file:
+            with open(self.config_file, "r") as file:
                 self.screen_config["settings"] = json.load(file)
         except FileNotFoundError:
-            self.save_settings()  # Erstellt Datei, falls nicht vorhanden
+            # Erstellt Datei, falls nicht vorhanden
+            self.save_settings()
 
     def save_settings(self):
         # Speichert Einstellungen in JSON-Datei
-        with open(CONFIG_FILE, "w") as file:
+        with open(self.config_file, "w") as file:
             json.dump(self.screen_config["settings"], file)
 
     def update_fonts(self):
@@ -122,7 +126,7 @@ class GameLauncher:
         
         if current_logo is not None:
             # Skalieren des Logos relativ zur Fenstergröße - HIER WURDE DIE GRÖSSE ANGEPASST
-            logo_width = self.screen_config["width"] // 3  # Größer (war vorher // 4)
+            logo_width = self.screen_config["width"] // 3.5  # Größer (war vorher // 4)
             logo_height = self.screen_config["height"] // 2.5  # Größer (war vorher // 8)
             logo_scaled = pygame.transform.scale(
                 current_logo, (logo_width, logo_height)
@@ -276,7 +280,8 @@ class GameLauncher:
             "snake.py",
             "pong.py",
             "viergewint.py",
-            "SLOTS.py"
+            "SLOTS.py",
+            "Tetris.py"
         ]
 
         if 0 <= index < len(games):

@@ -1064,7 +1064,7 @@ class GameUI:
                     self.ai_make_move()
 
             self.draw()
-            self.clock.tick(60)
+            self.clock.tick(120)
 
 # -----------------------------------------------------------------------------
 # Spielstart:

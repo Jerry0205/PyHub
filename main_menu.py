@@ -29,7 +29,7 @@ class GameLauncher:
             "height": 0,  # Aktuelle Bildschirmhöhe
             "surface": None,  # Pygame-Bildschirmoberfläche
             "fonts": {},  # Geladene Schriftarten
-            "current_view": "main_menu",  # Ansichten: main_menu, settings, credits, key_bindings
+            "current_view": "main_menu",  # Ansichten: main_menu, settings, credits, key_bindings, secret_menu
             "settings": {"dark_mode": False},
         }
 
@@ -48,6 +48,9 @@ class GameLauncher:
         self.config_file = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "config.json"
         )
+
+        # Platzhalter für den unsichtbaren Secret-Button (im Hauptmenü)
+        self.secret_button_rect = None
 
         self.init_pygame()    # Pygame initialisieren
         self.load_settings()  # Einstellungen laden
@@ -79,9 +82,9 @@ class GameLauncher:
     def update_fonts(self):
         h = self.screen_config["height"]
         self.screen_config["fonts"] = {
-            "title": pygame.font.Font(None, h // 10),  # Titelschrift
-            "option": pygame.font.Font(None, h // 15),   # Menüschrift
-            "button": pygame.font.Font(None, h // 20),   # Buttonschrift
+            "title": pygame.font.Font(None, h // 10),   # Titelschrift
+            "option": pygame.font.Font(None, h // 15),    # Menüschrift
+            "button": pygame.font.Font(None, h // 20),    # Buttonschrift
         }
 
     def load_assets(self):
@@ -107,7 +110,10 @@ class GameLauncher:
             (rect.width + 30, rect.height + 20), pygame.SRCALPHA
         )
         pygame.draw.rect(
-            highlight, HIGHLIGHT_COLOR, highlight.get_rect(), border_radius=5
+            highlight,
+            HIGHLIGHT_COLOR,
+            highlight.get_rect(),
+            border_radius=5
         )
         self.screen_config["surface"].blit(highlight, (rect.x - 15, rect.y - 10))
 
@@ -129,15 +135,21 @@ class GameLauncher:
                 current_logo, (logo_width, logo_height)
             )
             logo_rect = logo_scaled.get_rect(
-                center=(self.screen_config["width"] // 2,
-                        self.screen_config["height"] // 7)
+                center=(
+                    self.screen_config["width"] // 2,
+                    self.screen_config["height"] // 7,
+                )
             )
             screen.blit(logo_scaled, logo_rect)
         else:
-            title = self.screen_config["fonts"]["title"].render("PYHUB", True, text_color)
+            title = self.screen_config["fonts"]["title"].render(
+                "PYHUB", True, text_color
+            )
             title_rect = title.get_rect(
-                center=(self.screen_config["width"] // 2,
-                        self.screen_config["height"] // 8)
+                center=(
+                    self.screen_config["width"] // 2,
+                    self.screen_config["height"] // 8,
+                )
             )
             screen.blit(title, title_rect)
 
@@ -163,13 +175,23 @@ class GameLauncher:
             option_rect = option_surf.get_rect(
                 center=(
                     self.screen_config["width"] // 2,
-                    self.screen_config["height"] // 4 + i * (self.screen_config["height"] // 12),
+                    self.screen_config["height"] // 4 + 
+                    i * (self.screen_config["height"] // 12),
                 )
             )
             if i == self.state["mouse_hover"]:
                 self.draw_highlight(option_rect)
             screen.blit(option_surf, option_rect)
             option_rects.append(option_rect)
+
+        # Definiere den unsichtbaren Secret-Button unten rechts.
+        # Er wird nicht gezeichnet und reagiert auch nicht auf Hover.
+        self.secret_button_rect = pygame.Rect(
+            self.screen_config["width"] - 60,
+            self.screen_config["height"] - 60,
+            50,
+            50
+        )
 
         pygame.display.flip()
         return option_rects, button_rect
@@ -179,7 +201,9 @@ class GameLauncher:
         screen = self.screen_config["surface"]
         screen.fill(bg_color)
 
-        title = self.screen_config["fonts"]["title"].render("Settings", True, text_color)
+        title = self.screen_config["fonts"]["title"].render(
+            "Settings", True, text_color
+        )
         title_rect = title.get_rect(
             center=(self.screen_config["width"] // 2,
                     self.screen_config["height"] // 8)
@@ -193,7 +217,8 @@ class GameLauncher:
             option_rect = option_surf.get_rect(
                 center=(
                     self.screen_config["width"] // 2,
-                    self.screen_config["height"] // 4 + i * (self.screen_config["height"] // 12),
+                    self.screen_config["height"] // 4 +
+                    i * (self.screen_config["height"] // 12),
                 )
             )
             if i == self.state["mouse_hover"]:
@@ -211,7 +236,9 @@ class GameLauncher:
         width = self.screen_config["width"]
         height = self.screen_config["height"]
 
-        title = self.screen_config["fonts"]["title"].render("Credits", True, text_color)
+        title = self.screen_config["fonts"]["title"].render(
+            "Credits", True, text_color
+        )
         title_rect = title.get_rect(center=(width // 2, height // 8))
         screen.blit(title, title_rect)
 
@@ -224,17 +251,22 @@ class GameLauncher:
             "Weitere Credits: Chatgpt 4o, Claude3.7, Deepseek"
         ]
         font = self.screen_config["fonts"]["option"]
-        # Erhöhter Zeilenabstand: height // 15
         line_height = self.screen_config["height"] // 15
         start_y = self.screen_config["height"] // 4
         for i, line in enumerate(credits_lines):
             line_surf = font.render(line, True, text_color)
-            line_rect = line_surf.get_rect(center=(width // 2, start_y + i * line_height))
+            line_rect = line_surf.get_rect(
+                center=(width // 2, start_y + i * line_height)
+            )
             screen.blit(line_surf, line_rect)
 
         back_text = "Back"
-        back_surf = self.screen_config["fonts"]["button"].render(back_text, True, text_color)
-        back_rect = back_surf.get_rect(center=(width // 2, height * 7 // 8))
+        back_surf = self.screen_config["fonts"]["button"].render(
+            back_text, True, text_color
+        )
+        back_rect = back_surf.get_rect(
+            center=(width // 2, height * 7 // 8)
+        )
         mouse_pos = pygame.mouse.get_pos()
         if back_rect.collidepoint(mouse_pos):
             self.draw_highlight(back_rect)
@@ -254,7 +286,9 @@ class GameLauncher:
         width = self.screen_config["width"]
         height = self.screen_config["height"]
 
-        title = self.screen_config["fonts"]["title"].render("Key Bindings", True, text_color)
+        title = self.screen_config["fonts"]["title"].render(
+            "Key Bindings", True, text_color
+        )
         title_rect = title.get_rect(center=(width // 2, height // 8))
         screen.blit(title, title_rect)
 
@@ -263,7 +297,6 @@ class GameLauncher:
         font = self.screen_config["fonts"]["option"]
         for i, game in enumerate(games):
             option_surf = font.render(game, True, text_color)
-            # Verwende einen größeren Abstand z. B. height//10
             option_rect = option_surf.get_rect(
                 center=(width // 2, height // 4 + i * (height // 10))
             )
@@ -273,8 +306,12 @@ class GameLauncher:
             option_rects.append(option_rect)
 
         back_text = "Back"
-        back_surf = self.screen_config["fonts"]["button"].render(back_text, True, text_color)
-        back_rect = back_surf.get_rect(center=(width // 2, height * 7 // 8))
+        back_surf = self.screen_config["fonts"]["button"].render(
+            back_text, True, text_color
+        )
+        back_rect = back_surf.get_rect(
+            center=(width // 2, height * 7 // 8)
+        )
         mouse_pos = pygame.mouse.get_pos()
         if back_rect.collidepoint(mouse_pos):
             self.draw_highlight(back_rect)
@@ -286,7 +323,7 @@ class GameLauncher:
     def draw_key_bindings_detail(self, game_name):
         """
         Zeichnet die Detailansicht der Key Bindings für ein ausgewähltes Spiel.
-        Hier wurde der Zeilenabstand (height//15) vergrößert.
+        Hier wurde der Zeilenabstand vergrößert.
         """
         bg_color, text_color = self.get_colors()
         screen = self.screen_config["surface"]
@@ -295,7 +332,9 @@ class GameLauncher:
         height = self.screen_config["height"]
 
         title_text = f"{game_name} Key Bindings"
-        title = self.screen_config["fonts"]["title"].render(title_text, True, text_color)
+        title = self.screen_config["fonts"]["title"].render(
+            title_text, True, text_color
+        )
         title_rect = title.get_rect(center=(width // 2, height // 8))
         screen.blit(title, title_rect)
 
@@ -313,10 +352,8 @@ class GameLauncher:
                 "Untere Pfeiltaste -> Richtung nach unten",
             ],
             "Pong": [
-                "Spieler 1: W -> Schläger hoch "
-                "S -> Schläger runter",
-                "Spieler 2: Pfeil Oben -> Schläger hoch"
-                "Pfeil Unten -> Schläger runter",
+                "Spieler 1: W -> Schläger hoch und S -> Schläger runter",
+                "Spieler 2: Pfeil Oben -> Schläger hoch und Pfeil Unten -> Schläger runter",
                 "ESC -> Menü / Beenden",
             ],
             "4 Gewinnt": [
@@ -343,12 +380,18 @@ class GameLauncher:
         start_y = self.screen_config["height"] // 4
         for i, line in enumerate(lines):
             line_surf = font.render(line, True, text_color)
-            line_rect = line_surf.get_rect(center=(width // 2, start_y + i * line_height))
+            line_rect = line_surf.get_rect(
+                center=(width // 2, start_y + i * line_height)
+            )
             screen.blit(line_surf, line_rect)
 
         back_text = "Back"
-        back_surf = self.screen_config["fonts"]["button"].render(back_text, True, text_color)
-        back_rect = back_surf.get_rect(center=(width // 2, height * 7 // 8))
+        back_surf = self.screen_config["fonts"]["button"].render(
+            back_text, True, text_color
+        )
+        back_rect = back_surf.get_rect(
+            center=(width // 2, height * 7 // 8)
+        )
         mouse_pos = pygame.mouse.get_pos()
         if back_rect.collidepoint(mouse_pos):
             self.draw_highlight(back_rect)
@@ -357,18 +400,125 @@ class GameLauncher:
         pygame.display.flip()
         return [back_rect]
 
-    # Wir passen den zentralen Event-Handler für Key Bindings an, um den Typ des übergebenen Parameters
-    # zu prüfen und den jeweils passenden Handler aufzurufen.
+    def draw_secret_menu(self):
+        """
+        Zeichnet das Secret-Menü mit rotem Hintergrund und der Überschrift
+        "UNFERTIG!!!!! alles noch in arbeit". Hier erscheinen vier Buttons:
+          - "Mines": Startet mines.py
+          - "Car": Startet car.py
+          - "Race": Startet race.py
+          - "Back": Kehrt zum Hauptmenü zurück.
+        """
+        screen = self.screen_config["surface"]
+        # Roter Hintergrund
+        screen.fill((255, 0, 0))
+        white = (255, 255, 255)
+        width = self.screen_config["width"]
+        height = self.screen_config["height"]
+        mouse_pos = pygame.mouse.get_pos()
+
+        # Überschrift
+        title_text = "UNFERTIG!!!!! alles noch in arbeit"
+        title_surf = self.screen_config["fonts"]["title"].render(
+            title_text, True, white
+        )
+        title_rect = title_surf.get_rect(center=(width // 2, int(height * 0.15)))
+        screen.blit(title_surf, title_rect)
+
+        button_font = self.screen_config["fonts"]["button"]
+
+        # Mines-Button
+        mines_text = "Mines"
+        mines_surf = button_font.render(mines_text, True, white)
+        mines_rect = mines_surf.get_rect(center=(width // 2, int(height * 0.35)))
+        if mines_rect.collidepoint(mouse_pos):
+            self.draw_highlight(mines_rect)
+        screen.blit(mines_surf, mines_rect)
+
+        # Car-Button
+        car_text = "Car"
+        car_surf = button_font.render(car_text, True, white)
+        car_rect = car_surf.get_rect(center=(width // 2, int(height * 0.50)))
+        if car_rect.collidepoint(mouse_pos):
+            self.draw_highlight(car_rect)
+        screen.blit(car_surf, car_rect)
+
+        # Race-Button
+        race_text = "Race"
+        race_surf = button_font.render(race_text, True, white)
+        race_rect = race_surf.get_rect(center=(width // 2, int(height * 0.65)))
+        if race_rect.collidepoint(mouse_pos):
+            self.draw_highlight(race_rect)
+        screen.blit(race_surf, race_rect)
+
+        # Back-Button
+        back_text = "Back"
+        back_surf = button_font.render(back_text, True, white)
+        back_rect = back_surf.get_rect(center=(width // 2, int(height * 0.80)))
+        if back_rect.collidepoint(mouse_pos):
+            self.draw_highlight(back_rect)
+        screen.blit(back_surf, back_rect)
+
+        pygame.display.flip()
+        return mines_rect, car_rect, race_rect, back_rect
+
+    def handle_secret_menu_events(self, event, mines_rect, car_rect, race_rect, back_rect):
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.VIDEORESIZE:
+            self.screen_config["width"], self.screen_config["height"] = event.w, event.h
+            self.screen_config["surface"] = pygame.display.set_mode(
+                (self.screen_config["width"], self.screen_config["height"]),
+                pygame.RESIZABLE,
+            )
+            self.update_fonts()
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            pos = pygame.mouse.get_pos()
+            if mines_rect.collidepoint(pos):
+                self.launch_mines()
+            elif car_rect.collidepoint(pos):
+                self.launch_car()
+            elif race_rect.collidepoint(pos):
+                self.launch_race()
+            elif back_rect.collidepoint(pos):
+                self.screen_config["current_view"] = "main_menu"
+
+    def launch_mines(self):
+        mines_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "assetes", "miau", "mines.py"
+        )
+        if os.path.exists(mines_path):
+            subprocess.run([sys.executable, mines_path])
+        else:
+            print("Error: mines.py not found!")
+
+    def launch_car(self):
+        car_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "assetes", "miau", "car.py"
+        )
+        if os.path.exists(car_path):
+            subprocess.run([sys.executable, car_path])
+        else:
+            print("Error: car.py not found!")
+
+    def launch_race(self):
+        race_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "assetes", "miau", "race.py"
+        )
+        if os.path.exists(race_path):
+            subprocess.run([sys.executable, race_path])
+        else:
+            print("Error: race.py not found!")
+
     def handle_key_bindings_events(self, event, rects_or_dict):
         if isinstance(rects_or_dict, dict):
-            # Es handelt sich um die Spieleliste
             self.handle_key_bindings_list_events(event, rects_or_dict)
         elif isinstance(rects_or_dict, list):
-            # Es handelt sich um die Detail-Ansicht
             self.handle_key_bindings_detail_events(event, rects_or_dict)
-        else:
-            # Falls unerwarteter Typ, einfach ignorieren
-            pass
 
     def handle_key_bindings_list_events(self, event, rects_dict):
         if event.type == pygame.QUIT:
@@ -417,7 +567,6 @@ class GameLauncher:
             if rects[0].collidepoint(pos):
                 self.current_key_binding_view = "list"
                 self.selected_game = None
-        # Optionaler MOUSEMOTION-Handler kann hier ergänzt werden
 
     def handle_main_menu_events(self, event, option_rects, settings_rect):
         if event.type == pygame.QUIT:
@@ -438,7 +587,11 @@ class GameLauncher:
             )
             self.state["settings_hover"] = settings_rect.collidepoint(mouse_pos)
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if self.state["settings_hover"]:
+            pos = pygame.mouse.get_pos()
+            # Prüfe zuerst den unsichtbaren Secret-Button
+            if self.secret_button_rect and self.secret_button_rect.collidepoint(pos):
+                self.screen_config["current_view"] = "secret_menu"
+            elif self.state["settings_hover"]:
                 self.screen_config["current_view"] = "settings"
             elif self.state["mouse_hover"] >= 0:
                 if self.state["mouse_hover"] == len(MENU_OPTIONS) - 1:
@@ -459,7 +612,9 @@ class GameLauncher:
             )
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if self.state["mouse_hover"] == 0:
-                self.screen_config["settings"]["dark_mode"] = not self.screen_config["settings"]["dark_mode"]
+                self.screen_config["settings"]["dark_mode"] = (
+                    not self.screen_config["settings"]["dark_mode"]
+                )
                 self.save_settings()
             elif self.state["mouse_hover"] == 1:
                 self.screen_config["current_view"] = "credits"
@@ -527,6 +682,10 @@ class GameLauncher:
                     rects = self.draw_key_bindings_detail(self.selected_game)
                     for event in pygame.event.get():
                         self.handle_key_bindings_events(event, rects)
+            elif current_view == "secret_menu":
+                mines_rect, car_rect, race_rect, back_rect = self.draw_secret_menu()
+                for event in pygame.event.get():
+                    self.handle_secret_menu_events(event, mines_rect, car_rect, race_rect, back_rect)
 
 
 if __name__ == "__main__":

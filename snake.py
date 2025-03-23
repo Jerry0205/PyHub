@@ -2,7 +2,7 @@ from tkinter import *
 import random
 
 # Konstanten
-SPEED = 150
+SPEED = 200
 SPACE_SIZE = 50
 BODY_PARTS = 3
 SNAKE_COLOR = "#00FF00"      # grün

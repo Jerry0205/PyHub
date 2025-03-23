@@ -11,7 +11,7 @@ screen = pygame.display.set_mode((0, 0), FULLSCREEN)
 WIDTH, HEIGHT = screen.get_size()
 pygame.display.set_caption("Slot Machine mit Kreditsystem")
 clock = pygame.time.Clock()
-FPS = 60
+FPS = 120
 
 # Farben
 COLORS = {

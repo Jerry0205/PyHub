@@ -246,7 +246,7 @@ class GameLauncher:
             "Entwickler: Brian Gollek, Jeremy Hundt,",
             "Nino Mrkwitschka, Petja Höllein, Conrad Schüler",
             "",
-            "Version: 2.0",
+            "Version: 1.0",
             "",
             "Weitere Credits: Chatgpt 4o, Claude3.7, Deepseek"
         ]

@@ -20,8 +20,8 @@ try:
     # Skalierungsfaktoren berechnen
     scale_x = width / base_width
     scale_y = height / base_height
-    scale_factor_x = math.sqrt(scale_x)
-    scale_factor_y = math.sqrt(scale_y)
+    scale_factor_x = math.sqrt(scale_x) # Wurzelfaktor für moderatere Größenänderung
+    scale_factor_y = math.sqrt(scale_y) # Wurzelfaktor für moderatere Größenänderung
 
     # Farben
     WHITE = (255, 255, 255)
@@ -38,8 +38,8 @@ try:
     paddle_width = int(base_paddle_width * scale_factor_x)
     paddle_height = int(base_paddle_height * scale_factor_y)
     ball_size = int(base_ball_size * scale_factor_x)
-    paddle_speed = int(10 * scale_factor_y)
-    ai_speed = int(6 * scale_factor_y)
+    paddle_speed = int(10 * scale_factor_y) # Geschwindigkeit skaliert mit Höhe
+    ai_speed = int(6 * scale_factor_y)      # KI-Geschwindigkeit skaliert mit Höhe
     base_ball_speed = 3.5
 
     # Initialisierung der Spielobjekte
@@ -76,8 +76,8 @@ try:
     score1, score2 = 0, 0
 
     # Fonts
-    font = pygame.font.Font(None, 74)
-    small_font = pygame.font.Font(None, 36)
+    font = pygame.font.Font(None, int(74 * scale_factor_y)) # Skalierte Schriftgröße
+    small_font = pygame.font.Font(None, int(36 * scale_factor_y)) # Skalierte Schriftgröße
 
     # Spielzustände
     STATE_MENU = 0
@@ -176,8 +176,14 @@ try:
         """Zeichnet einen Button und speichert seine Informationen für spätere Klickverarbeitung"""
         global button_rects
 
-        button_rect = pygame.Rect(x, y, w, h)
-        button_rects[text] = (button_rect, action)
+        # Skalierte Button-Dimensionen und Positionen
+        scaled_x = int(x * scale_x)
+        scaled_y = int(y * scale_y)
+        scaled_w = int(w * scale_x)
+        scaled_h = int(h * scale_y)
+
+        button_rect = pygame.Rect(scaled_x, scaled_y, scaled_w, scaled_h)
+        button_rects[text] = (button_rect, action) # Speichere das skalierte Rect
 
         # Mausposition sicher abrufen
         try:
@@ -188,7 +194,7 @@ try:
 
         pygame.draw.rect(screen, active_color if hover else inactive_color, button_rect)
         text_surface = small_font.render(text, True, BLACK)
-        text_rect = text_surface.get_rect(center=(x + w // 2, y + h // 2))
+        text_rect = text_surface.get_rect(center=button_rect.center) # Zentriert im skalierten Button
         screen.blit(text_surface, text_rect)
 
     def handle_button_click(pos):
@@ -208,7 +214,7 @@ try:
                 quit_game()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    if current_state in (STATE_GAME, STATE_MODE_SELECT):
+                    if current_state in (STATE_GAME, STATE_MODE_SELECT, STATE_GAME_OVER):
                         current_state = STATE_MENU
                     elif current_state == STATE_MENU:
                         quit_game()
@@ -223,13 +229,14 @@ try:
         button_rects = {}
         screen.fill(BLACK)
 
-        # Titel
+        # Titel (skaliert)
         title = font.render("PONG", True, WHITE)
-        screen.blit(title, (width // 2 - title.get_width() // 2, 100))
+        title_rect = title.get_rect(center=(width // 2, int(100 * scale_y)))
+        screen.blit(title, title_rect)
 
-        # Buttons (der "Vollbild"-Button wurde entfernt)
+        # Buttons (Basis-Positionen, werden in draw_button skaliert)
         button_width, button_height = 300, 50
-        button_x = width // 2 - button_width // 2
+        button_x = base_width // 2 - button_width // 2 # Basis-X
 
         draw_button("Einzelspieler", button_x, 250, button_width, button_height,
                     GRAY, LIGHT_GRAY, select_singleplayer)
@@ -246,16 +253,20 @@ try:
         button_rects = {}
         screen.fill(BLACK)
 
+        # Titel (skaliert)
         title = font.render("Spielmodus wählen", True, WHITE)
-        screen.blit(title, (width // 2 - title.get_width() // 2, 100))
+        title_rect = title.get_rect(center=(width // 2, int(100 * scale_y)))
+        screen.blit(title, title_rect)
 
-        mode_text = small_font.render(
-            "Einzelspieler" if is_singleplayer else "Mehrspieler", True, WHITE
-        )
-        screen.blit(mode_text, (width // 2 - mode_text.get_width() // 2, 180))
+        # Modus-Text (skaliert)
+        mode_text_content = "Einzelspieler" if is_singleplayer else "Mehrspieler"
+        mode_text = small_font.render(mode_text_content, True, WHITE)
+        mode_text_rect = mode_text.get_rect(center=(width // 2, int(180 * scale_y)))
+        screen.blit(mode_text, mode_text_rect)
 
+        # Buttons (Basis-Positionen)
         button_width, button_height = 300, 50
-        button_x = width // 2 - button_width // 2
+        button_x = base_width // 2 - button_width // 2 # Basis-X
 
         draw_button("Normal", button_x, 250, button_width, button_height,
                     GRAY, LIGHT_GRAY, start_normal_mode)
@@ -278,23 +289,21 @@ try:
         else:
             winner_text = "Spieler 2 gewinnt!"
 
+        # Text (skaliert)
         winner_surface = font.render(
             winner_text, True, RED if is_hardcore else WHITE
         )
-        screen.blit(
-            winner_surface,
-            (width // 2 - winner_surface.get_width() // 2, height // 2 - 50),
-        )
+        winner_rect = winner_surface.get_rect(center=(width // 2, height // 2 - int(50 * scale_y)))
+        screen.blit(winner_surface, winner_rect)
 
         score_surface = font.render(
             f"{score1} - {score2}", True, RED if is_hardcore else WHITE
         )
-        screen.blit(
-            score_surface,
-            (width // 2 - score_surface.get_width() // 2, height // 2 + 30),
-        )
+        score_rect = score_surface.get_rect(center=(width // 2, height // 2 + int(30 * scale_y)))
+        screen.blit(score_surface, score_rect)
 
-        draw_button("Zurück zum Menü", width // 2 - 150, height // 2 + 120, 300,
+        # Button (Basis-Positionen)
+        draw_button("Zurück zum Menü", base_width // 2 - 150, base_height // 2 + 120, 300,
                     50, GRAY, LIGHT_GRAY, return_to_menu)
 
         pygame.display.flip()
@@ -307,108 +316,145 @@ try:
 
         keys = pygame.key.get_pressed()
 
-        # Spieler 1 (linker Schläger) - W/S
-        if keys[pygame.K_w] and paddle1.top > 0:
+        # --- Spieler 1 (linker Schläger) ---
+        # Steuerung mit W/S ODER Pfeiltasten (Hoch/Runter)
+        move_up = keys[pygame.K_w] or keys[pygame.K_UP]
+        move_down = keys[pygame.K_s] or keys[pygame.K_DOWN]
+
+        if move_up and paddle1.top > 0:
             paddle1.y -= paddle_speed
-        if keys[pygame.K_s] and paddle1.bottom < height:
+        # Benutze elif hier, falls jemand W und S (oder Hoch und Runter) gleichzeitig drückt
+        elif move_down and paddle1.bottom < height:
             paddle1.y += paddle_speed
 
-        # Spieler 2 (rechter Schläger) - KI oder Pfeiltasten
+
+        # --- Spieler 2 (rechter Schläger) ---
+        # Steuerung durch KI im Einzelspieler oder Pfeiltasten im Mehrspieler
         if is_singleplayer:
+            # --- KI-Logik (UNVERÄNDERT) ---
             if ball_speed_x > 0:  # Ball bewegt sich zum rechten Schläger
                 ai_frame_counter += 1
 
                 if ai_force_miss:
-                    target_y = ball.centery + 200 * (
+                    # KI zielt absichtlich daneben
+                    target_y = ball.centery + 200 * scale_y * ( # Skalierter Offset
                         1 if ball.centery < height / 2 else -1
                     )
                 else:
+                    # Normale KI-Zielberechnung mit Fehlern
                     if random.random() < ai_mistake_chance and ai_frame_counter % 60 == 0:
-                        ai_target_offset = random.randint(-50, 50)
+                        ai_target_offset = random.randint(int(-50 * scale_y), int(50 * scale_y)) # Skalierter Offset
 
                     target_y = ball.centery + ai_target_offset
 
                     if random.random() > ai_precision:
-                        target_y += random.randint(-30, 30)
+                        target_y += random.randint(int(-30 * scale_y), int(30 * scale_y)) # Skalierter Offset
 
+                # KI bewegt den Schläger zum Ziel
                 if paddle2.centery < target_y and paddle2.bottom < height:
                     paddle2.y += ai_speed
                 elif paddle2.centery > target_y and paddle2.top > 0:
                     paddle2.y -= ai_speed
 
+                # Reaktionsverzögerung
                 if ai_frame_counter > ai_reaction_delay:
                     ai_frame_counter = 0
-        else:
+            # --- Ende KI-Logik ---
+
+        else: # Mehrspieler-Modus
+            # Im Mehrspieler steuern die Pfeiltasten Spieler 2
+            # (Wichtig: Diese Logik wird jetzt nur noch im Mehrspieler-Modus relevant,
+            # da die Pfeiltasten für Spieler 1 oben abgefragt werden)
             if keys[pygame.K_UP] and paddle2.top > 0:
                 paddle2.y -= paddle_speed
             if keys[pygame.K_DOWN] and paddle2.bottom < height:
                 paddle2.y += paddle_speed
 
-        # Ball bewegen
+        # --- Ballbewegung und Kollision ---
         ball.x += ball_speed_x
         ball.y += ball_speed_y
 
         # Ball-Kollision mit oberem/unterem Rand
         if ball.top <= 0 or ball.bottom >= height:
             ball_speed_y *= -1
+            # Sicherstellen, dass der Ball nicht im Rand stecken bleibt
+            if ball.top < 0: ball.top = 0
+            if ball.bottom > height: ball.bottom = height
+
 
         # Ball-Kollision mit Schlägern
-        if ball.colliderect(paddle1) or ball.colliderect(paddle2):
-            if ball.colliderect(paddle2) and ball_speed_x > 0:
+        collision_occurred = False
+        if ball.colliderect(paddle1) and ball_speed_x < 0: # Nur bei Bewegung nach links
+            ball_speed_x *= -1
+            collision_occurred = True
+            # Ball leicht aus dem Schläger schieben, um Mehrfachkollisionen zu vermeiden
+            ball.left = paddle1.right
+            # KI-Zähler zurücksetzen, falls der Spieler trifft
+            ai_hit_counter = 0
+            ai_force_miss = False
+            ai_hits_until_miss = random.randint(3, 6)
+
+        if ball.colliderect(paddle2) and ball_speed_x > 0: # Nur bei Bewegung nach rechts
+            ball_speed_x *= -1
+            collision_occurred = True
+            # Ball leicht aus dem Schläger schieben
+            ball.right = paddle2.left
+            # KI-Treffer nur zählen, wenn die KI auch aktiv ist
+            if is_singleplayer:
                 ai_hit_counter += 1
                 if ai_hit_counter >= ai_hits_until_miss:
-                    ai_force_miss = True
-                    ai_hit_counter = 0
-                    ai_hits_until_miss = random.randint(3, 6)
+                    ai_force_miss = True # Nächster Treffer wird ein Fehlschlag
 
-            ball_speed_x *= -1
-
+        # Geschwindigkeitsanpassung nach Kollision
+        if collision_occurred:
             if is_hardcore:
                 ball_speed_x *= 1.10
                 ball_speed_y *= 1.10
 
-            ball_speed_y += random.uniform(-1, 1)
-            if abs(ball_speed_y) > 8:
-                ball_speed_y = 8 * (1 if ball_speed_y > 0 else -1)
+            # Leichte zufällige Änderung des Y-Winkels
+            # Skalierter Y-Speed-Change
+            y_change = random.uniform(-1 * scale_factor_y, 1 * scale_factor_y)
+            ball_speed_y += y_change
 
-        # Ball außerhalb des Spielfelds - linker Rand
+            # Begrenzung der Y-Geschwindigkeit (skaliert)
+            max_y_speed = 8 * scale_factor_y
+            ball_speed_y = max(-max_y_speed, min(max_y_speed, ball_speed_y))
+            # Begrenzung der X-Geschwindigkeit (skaliert)
+            max_x_speed = 15 * scale_factor_x
+            ball_speed_x = max(-max_x_speed, min(max_x_speed, ball_speed_x))
+
+
+        # --- Punktevergabe und Ball-Reset ---
+        point_scored = False
+        # Ball außerhalb des Spielfelds - linker Rand (Spieler 1 verfehlt)
         if ball.left <= 0:
             score2 += 1
-            ball.x = width // 2 - ball_size // 2
-            ball.y = height // 2 - ball_size // 2
+            point_scored = True
 
-            speed_factor_x = width / base_width
-            speed_factor_y = height / base_height
-
-            if fullscreen:
-                speed_factor_x = math.sqrt(speed_factor_x)
-                speed_factor_y = math.sqrt(speed_factor_y)
-
-            ball_speed_x = base_ball_speed * speed_factor_x
-            ball_speed_y = base_ball_speed * speed_factor_y * random.choice([-1, 1])
-
-            ai_hit_counter = 0
-            ai_force_miss = False
-
-        # Ball außerhalb des Spielfelds - rechter Rand
+        # Ball außerhalb des Spielfelds - rechter Rand (Spieler 2 / KI verfehlt)
         if ball.right >= width:
             score1 += 1
-            ball.x = width // 2 - ball_size // 2
-            ball.y = height // 2 - ball_size // 2
+            point_scored = True
 
-            speed_factor_x = width / base_width
-            speed_factor_y = height / base_height
-
-            if fullscreen:
-                speed_factor_x = math.sqrt(speed_factor_x)
-                speed_factor_y = math.sqrt(speed_factor_y)
-
-            ball_speed_x = -base_ball_speed * speed_factor_x
+        if point_scored:
+            # Ball zurücksetzen
+            ball.center = (width // 2, height // 2)
+            # Geschwindigkeit zurücksetzen und Richtung ändern
+            speed_factor_x = math.sqrt(scale_x) if fullscreen else scale_x
+            speed_factor_y = math.sqrt(scale_y) if fullscreen else scale_y
+            # Richtung zum Verlierer des Punktes
+            direction_x = 1 if ball.left <= 0 else -1 # Wenn links raus -> Start nach rechts (zu P2)
+            ball_speed_x = base_ball_speed * speed_factor_x * direction_x
             ball_speed_y = base_ball_speed * speed_factor_y * random.choice([-1, 1])
-
+            # KI-Fehler-Zähler zurücksetzen
             ai_hit_counter = 0
             ai_force_miss = False
+            ai_hits_until_miss = random.randint(3, 6)
+            # Kurze Pause nach Punkt (optional)
+            # pygame.time.wait(500)
 
+
+        # --- Zeichnen ---
         screen.fill(BLACK)
         color = RED if is_hardcore else WHITE
         pygame.draw.aaline(screen, color, (width // 2, 0), (width // 2, height))
@@ -416,19 +462,25 @@ try:
         pygame.draw.rect(screen, color, paddle2)
         pygame.draw.ellipse(screen, color, ball)
 
+        # Punktestand (skaliert)
         score_text = font.render(f"{score1} - {score2}", True, color)
-        screen.blit(score_text, (width // 2 - score_text.get_width() // 2, 20))
+        score_rect = score_text.get_rect(center=(width // 2, int(30 * scale_y)))
+        screen.blit(score_text, score_rect)
 
-        mode_text = small_font.render(
-            f"{'Einzelspieler' if is_singleplayer else 'Mehrspieler'}{' - Hardcore' if is_hardcore else ''}",
-            True,
-            color,
-        )
-        screen.blit(mode_text, (width - mode_text.get_width() - 10, 10))
+        # Modus-Anzeige (skaliert)
+        mode_string = "Einzelspieler" if is_singleplayer else "Mehrspieler"
+        if is_hardcore:
+            mode_string += " - Hardcore"
+        mode_text = small_font.render(mode_string, True, color)
+        mode_rect = mode_text.get_rect(topright=(width - int(10 * scale_x), int(10 * scale_y)))
+        screen.blit(mode_text, mode_rect)
 
+        # ESC-Hinweis (skaliert)
         esc_text = small_font.render("ESC = Menü", True, color)
-        screen.blit(esc_text, (10, 10))
+        esc_rect = esc_text.get_rect(topleft=(int(10 * scale_x), int(10 * scale_y)))
+        screen.blit(esc_text, esc_rect)
 
+        # Spielende prüfen
         if score1 >= 10 or score2 >= 10:
             current_state = STATE_GAME_OVER
 
@@ -437,8 +489,9 @@ try:
     # Hauptschleife
     running = True
     while running:
-        handle_events()
+        handle_events() # Events zuerst behandeln
 
+        # Zustandslogik
         if current_state == STATE_MENU:
             menu()
         elif current_state == STATE_MODE_SELECT:
@@ -448,10 +501,12 @@ try:
         elif current_state == STATE_GAME_OVER:
             game_over()
 
-        clock.tick(244)
+        clock.tick(144) # FPS-Limit (z.B. 144)
 
 except Exception as e:
     print(f"Ein Fehler ist aufgetreten: {e}")
     traceback.print_exc()
+finally: # Sicherstellen, dass Pygame beendet wird
     pygame.quit()
     sys.exit()
+
